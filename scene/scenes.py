@@ -12,6 +12,37 @@ class Point:
         self.x = x
         self.y = y
 
+    def __eq__(self, other: object) -> bool:
+        return self.x == other.x and self.y == other.y
+
+    def __str__(self) -> str:
+        return f"(x:{self.x}, y:{self.y}) "
+
+class Line:
+    def __init__(self) -> None:
+        self.points = []
+
+    def __str__(self) -> str:
+        return " ".join([str(pt) for pt in self.points])
+
+    def append(self, new_point: Point) -> None:
+        if self.points and self.points[-1] == new_point:
+            return
+        self.points.append(new_point)
+
+class Loop(Line):
+    def __init__(self) -> None:
+        super().__init__()
+        self.looped = False
+
+    def is_loop(self) -> bool:
+        if not self.points:
+            return False
+        if self.looped:
+            return True
+        self.looped = self.points[-1] in self.points[:-1]
+        return self.looped
+
 class Scene:
     def __init__(self, title: str, width: int, height: int, max_fps: int) -> None:
         self.title = title
@@ -55,6 +86,12 @@ class Scene:
     def render(self) -> None:
         GLUtils.prepare_render()
 
+    def to_ortho(self, point: Point) -> Point:
+        new_point = Point(
+            (2*point.x - self.screen_width)/self.screen_width,
+            (2*point.y - self.screen_height)/self.screen_height
+        )
+        return new_point
 
 class GLUtils:
     @staticmethod
@@ -71,6 +108,7 @@ class GLUtils:
 
     @staticmethod
     def draw_point(x: int, y: int, size: int) -> None:
+        glColor(1.0, 1.0, 1.0, 1.0)
         glPointSize(size)
         glBegin(GL_POINTS)
         glVertex2f(x, y)
@@ -89,6 +127,7 @@ class GLUtils:
 
     @staticmethod
     def draw_points(points: list) -> None:
+        glColor(0.5, 0.0, 0.0, 1)
         glPointSize(5)
         glBegin(GL_POINTS)
         for point in points:
@@ -96,12 +135,29 @@ class GLUtils:
         glEnd()
 
     @staticmethod
-    def draw_lines(points: list) -> None:
+    def draw_line(points: list) -> None:
         glPointSize(1)
         glBegin(GL_LINE_STRIP)
         for point in points:
             glVertex2f(point.x, point.y)
         glEnd()
+
+    @staticmethod
+    def draw_lines(lines: list) -> None:
+        glPointSize(1)
+        for line in lines:
+            GLUtils.draw_line(line.points)
+
+    @staticmethod
+    def draw_polygon(points: list, draw_points = True) -> None:
+        glColor(0.1, 0.1, 0.2, 1)
+        glPointSize(1)
+        glBegin(GL_TRIANGLE_FAN)
+        for point in points:
+            glVertex2f(point.x, point.y)
+        glEnd()
+        if draw_points:
+            GLUtils.draw_points(points)
 
 class GLScene(Scene):
     def setup(self) -> None:
@@ -120,16 +176,51 @@ class DrawingScene(Scene):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 print("Mouse clickled")
                 x, y = pygame.mouse.get_pos()
-                self.points.append(Point(
-                    2*(x - self.screen_width/2)/self.screen_width,
-                    2*(y - self.screen_height/2)/self.screen_height
-                ))
+                screen_point = Point(x, y)
+                ortho_point = self.to_ortho(screen_point)
+                self.points.append(ortho_point)
 
     def render(self) -> None:
         super().render()
         GLUtils.draw_points(self.points)
-        GLUtils.draw_lines(self.points)
+        GLUtils.draw_line(self.points)
+
+
+class DrawingObstacles(Scene): #To be renamed
+    def __init__(self, title: str, width: int, height: int, max_fps: int) -> None:
+        super().__init__(title, width, height, max_fps)
+        self.obstacles = []
+        self.mouse_down = False
+
+    def get_inputs(self) -> None:
+        for event in self.events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.mouse_down = True
+                self.obstacles.append(Loop())
+                print("Staring a new line")
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.mouse_down = False
+                print("Finishing last line")
+                current_obstacle = self.obstacles[-1]
+                if not current_obstacle.is_loop():
+                    self.obstacles.pop()
+            elif event.type == pygame.MOUSEMOTION and self.mouse_down:
+                x, y = pygame.mouse.get_pos()
+                screen_point = Point(x, y)
+                ortho_point = self.to_ortho(screen_point)
+                current_obstacle = self.obstacles[-1]
+                self.obstacles[-1].append(ortho_point)
+                if current_obstacle.is_loop():
+                    print("Found loop")
+                    self.mouse_down = False
+
+    def render(self) -> None:
+        super().render()
+        if not self.obstacles:
+            return
+        for obstacle in self.obstacles:
+            GLUtils.draw_polygon(obstacle.points, not obstacle.looped)
 
 if __name__ == '__main__':
-    scene = DrawingScene("OpenGL", 900, 600, 20)
+    scene = DrawingObstacles("OpenGL", 900, 600, 20)
     scene.run()

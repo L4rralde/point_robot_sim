@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from threading import Thread
 
-from scenes import Scene, GLUtils
+from scenes import Scene, GLUtils, DrawingObstacles
 from models import Particle
 
 app = Flask(__name__)
@@ -37,7 +37,7 @@ def stop():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-class ParticleScene(Scene):
+class ParticleScene(DrawingObstacles):
     def __init__(self, title: str, width: int, height: int, max_fps: int) -> None:
         super().__init__(title, width, height, max_fps)
         self.particle = Particle()
