@@ -159,6 +159,26 @@ class GLUtils:
         if draw_points:
             GLUtils.draw_points(points)
 
+
+class SvgScene(Scene):
+    def __init__(self, title: str, svg: str, max_fps: int) -> None:
+        image = Image.open(svg)
+        h, w = image.size
+        image = np.asarray(image.resize((h//5, w//5)))
+        h, w = image.shape
+        super().__init__(title, w, h, max_fps)
+        xs, ys = np.where(image == 0)
+        self.grid = image==0
+        self.contours = [
+            self.to_ortho(Point(y, x))
+            for x,y in zip(xs, ys)
+        ]
+
+    def render(self) -> None:
+        super().render()
+        GLUtils.draw_points(self.contours)
+
+
 class GLScene(Scene):
     def setup(self) -> None:
         GLUtils.init_ortho(0, 15, -1.5, 1.5)
