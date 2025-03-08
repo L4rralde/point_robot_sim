@@ -107,8 +107,10 @@ class GLUtils:
         glLoadIdentity()
 
     @staticmethod
-    def draw_point(x: int, y: int, size: int) -> None:
-        glColor(1.0, 1.0, 1.0, 1.0)
+    def draw_point(x: int, y: int, size: int, *args, **kwargs) -> None:
+        color = kwargs.get("color", (1.0, 1.0, 1.0, 1.0))
+
+        glColor(*color)
         glPointSize(size)
         glBegin(GL_POINTS)
         glVertex2f(x, y)
@@ -126,32 +128,42 @@ class GLUtils:
         glEnd()
 
     @staticmethod
-    def draw_points(points: list) -> None:
-        glColor(0.5, 0.0, 0.0, 1)
-        glPointSize(5)
+    def draw_points(points: list, *agrs, **kwargs) -> None:
+        color = kwargs.get("color", (0.5, 0.0, 0.0, 1))
+        size = kwargs.get("size", 5)
+
+        glColor(*color)
+        glPointSize(size)
         glBegin(GL_POINTS)
         for point in points:
             glVertex2f(point.x, point.y)
         glEnd()
 
     @staticmethod
-    def draw_line(points: list) -> None:
-        glPointSize(1)
+    def draw_line(points: list, *args, **kwargs) -> None:
+        color = kwargs.get("color", (0.5, 0.0, 0.0, 1))
+        size = kwargs.get("size", 1)
+
+        glColor(*color)
+        glPointSize(size)
         glBegin(GL_LINE_STRIP)
         for point in points:
             glVertex2f(point.x, point.y)
         glEnd()
 
     @staticmethod
-    def draw_lines(lines: list) -> None:
-        glPointSize(1)
+    def draw_lines(lines: list, *args, **kwargs) -> None:
+        glPointSize(1, *args, **kwargs)
         for line in lines:
             GLUtils.draw_line(line.points)
 
     @staticmethod
-    def draw_polygon(points: list, draw_points = True) -> None:
-        glColor(0.1, 0.1, 0.2, 1)
-        glPointSize(1)
+    def draw_polygon(points: list, draw_points = True, *args, **kwargs) -> None:
+        color = kwargs.get("color", (0.1, 0.1, 0.2, 1))
+        size = kwargs.get("size", 1)
+
+        glColor(*color)
+        glPointSize(size)
         glBegin(GL_TRIANGLE_FAN)
         for point in points:
             glVertex2f(point.x, point.y)
