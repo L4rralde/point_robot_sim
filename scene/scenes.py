@@ -181,7 +181,7 @@ class SvgScene(Scene):
 
 class GLScene(Scene):
     def setup(self) -> None:
-        GLUtils.init_ortho(0, 15, -1.5, 1.5)
+        GLUtils.init_ortho(-1, 1, -1, 1)
 
     def render(self) -> None:
         GLUtils.prepare_render()
