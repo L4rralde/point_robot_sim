@@ -101,7 +101,10 @@ class GLUtils:
         gluOrtho2D(left, right, top, bottom)
 
     @staticmethod
-    def prepare_render() -> None:
+    def prepare_render(**kwargs) -> None:
+        color = kwargs.get("color", (0.0, 0.0, 0.0, 1.0))
+        glClearColor(*color)
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -155,7 +158,7 @@ class GLUtils:
     def draw_lines(lines: list, *args, **kwargs) -> None:
         glPointSize(1, *args, **kwargs)
         for line in lines:
-            GLUtils.draw_line(line.points)
+            GLUtils.draw_line(line.points, **kwargs)
 
     @staticmethod
     def draw_polygon(points: list, draw_points = True, *args, **kwargs) -> None:
